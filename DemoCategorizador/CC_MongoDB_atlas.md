@@ -1,6 +1,6 @@
 # Confluent Cloud Replication and MongoDB Atlas integration 
 This is the high level architecture:
-![GitHub Logo](/images/arqui.png)
+![GitHub Logo](https://github.com/jr-marquez/Demos/blob/main/DemoCategorizador/images/arqui.png)
 
 # Running the Demo
 You'll need an account in CC and include API keys from cluster,SR and ksqlDB, please check variables.md , you'll need also an MongoDB atlas instance. 
