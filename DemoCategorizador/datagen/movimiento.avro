@@ -1,0 +1,46 @@
+{
+        "namespace": "ksql",
+        "name": "movimientos",
+        "type": "record",
+        "fields": [
+                {"name": "id_movimiento", "type": {
+                    "type": "int",
+                    "arg.properties": {
+                        "iteration": { "start": 1, "step": 2}
+                    }
+                }},
+                {"name": "id_cliente", "type": {
+                    "type": "int",
+                    "arg.properties": {
+                        "iteration": { "start": 1, "restart": 10}
+                    }
+                }},
+                {"name": "id_cuenta", "type": {
+                    "type": "int",
+                    "arg.properties": {
+                        "iteration": { "start": 1234000, "step": 100, "restart": 1235000}
+                    }
+                }},
+                {"name": "monto", "type": {
+                    "type":"long",
+                    "arg.properties":{
+                      "iteration": { "start": -1000, "step": 100, "restart": 3000}
+                    }
+                }},
+                {"name": "concepto", "type": {
+                    "type": "string",
+                    "arg.properties": {
+                    "options": [
+                        "Compra de entradas ticketmaster concierto ricky martin",
+                        "compra en Restaurante Coca nro4",
+                        "concepto delivery supermercados dya",
+                        "pizzería muy buena hermanos",
+                        "Cuenta social club deportivo torque",
+                        "Recibo de agua y luz - Todo junto",
+                        "compra calzado para niños - Me Queda Chica S.A",
+                        "Kiosko Bendita Golosina S.A"
+                        ]
+                    }
+                }}
+        ]
+}

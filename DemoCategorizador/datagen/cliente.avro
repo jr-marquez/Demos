@@ -1,0 +1,47 @@
+{
+        "namespace": "ksql",
+        "name": "cliente",
+        "type": "record",
+        "fields": [
+                {"name": "id_cliente", "type": {
+                    "type": "int",
+                    "arg.properties": {
+                        "iteration": { "start": 1, "restart": 25}
+                    }
+                }},
+                {"Nombre": "bank", "type": {
+                    "type": "string",
+                    "arg.properties": {
+                    "options": [
+                        "Citi",
+                        "Commonwealth Bank of Australia",
+                        "BNP Paribas",
+                        "Wells Fargo",
+                        "Deutsche Bank",
+                        "Royal Bank of Canada",
+                        "Barclays Bank",
+                        "Bank of Spain",
+                        "United Overseas Bank",
+                        "DBS"
+                        ]
+                    }
+                }},
+                {"name": "status", "type": {
+                    "type": "string",
+                    "arg.properties": {
+                    "options": [
+                        "OK",
+                        "OK",
+                        "OK",
+                        "OK",
+                        "OK",
+                        "OK",
+                        "OK",
+                        "OK",
+                        "OK",
+                        "FAIL"
+                        ]
+                    }
+                }}
+        ]
+}
