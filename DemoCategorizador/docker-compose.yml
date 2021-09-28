@@ -1,79 +1,102 @@
 ---
-version: '3.4'
-services:
-  ksqldb-cli:
-    image: confluentinc/cp-ksqldb-cli:6.1.0
-    container_name: ksqldb-cli
-    entrypoint: /bin/sh
-    tty: true
+    version: '3.4'
+    services:
     
-  postgres:
-    image: debezium/postgres:12
-    hostname: postgres
-    container_name: postgres
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: postgres-user
-      POSTGRES_PASSWORD: postgres-pw
-      POSTGRES_DB: customers
+      k01:
+        container_name: k01
+        image: docker.elastic.co/kibana/kibana:7.7.1
+        depends_on:
+          - es01
+        environment:
+          SERVER_NAME: kibana
+          ELASTICSEARCH_HOSTS: http://es01:9200
+        ports:
+          - 5601:5601
+      es01:
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.7.1
+        container_name: es01
+        environment:
+          - node.name=es01
+          - cluster.name=es-docker-cluster
+          - discovery.type=single-node
+          - bootstrap.memory_lock=true
+          - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        ulimits:
+          memlock:
+            soft: -1
+            hard: -1
+        volumes:
+          - data01:/usr/share/elasticsearch/data
+        ports:
+          - 9200:9200
+      postgres:
+        image: debezium/postgres:12
+        hostname: postgres
+        container_name: postgres
+        ports:
+          - "5432:5432"
+        environment:
+          POSTGRES_USER: postgres-user
+          POSTGRES_PASSWORD: postgres-pw
+          POSTGRES_DB: customers
+        volumes:
+          - ./postgres/custom-config.conf:/etc/postgresql/postgresql.conf
+        command: postgres -c config_file=/etc/postgresql/postgresql.conf
+        
+      connect:
+        image: confluentinc/cp-kafka-connect:latest
+        hostname: connect
+        container_name: connect
+        ports:
+          - "8083:8083"
+        environment:
+          CONNECT_BOOTSTRAP_SERVERS: pkc-lz6r3.northeurope.azure.confluent.cloud:9092
+          CONNECT_REST_ADVERTISED_HOST_NAME: connect
+          CONNECT_GROUP_ID: connect-cluster
+          CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+          CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+          CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: null
+          CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: null
+          CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+          CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+          CONNECT_INTERNAL_KEY_CONVERTER_SCHEMAS_ENABLE: null
+          CONNECT_INTERNAL_VALUE_CONVERTER_SCHEMAS_ENABLE: null
+          CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
+          CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 3
+          CONNECT_OFFSET_STORAGE_PARTITIONS: 3
+          CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
+          CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 3
+          CONNECT_STATUS_STORAGE_TOPIC: connect-status
+          CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 3
+          CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+          CONNECT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: https
+          CONNECT_SASL_MECHANISM: PLAIN
+          CONNECT_REQUEST_TIMEOUT_MS: 20000
+          CONNECT_RETRY_BACKOFF_MS: 500
+          CONNECT_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="ECI6Y6JW3REKKBSI" password="RvkljkEOitUV+6Kk5ZbN+GOYx7WZjH0/6A25ZePW7g8sfsO/3BFaxRTPEl9ZUbWX";'
+          CONNECT_SECURITY_PROTOCOL: SASL_SSL
+          CONNECT_CONSUMER_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: https
+          CONNECT_CONSUMER_SASL_MECHANISM: PLAIN
+          CONNECT_CONSUMER_REQUEST_TIMEOUT_MS: 20000
+          CONNECT_CONSUMER_RETRY_BACKOFF_MS: 500
+          CONNECT_CONSUMER_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="ECI6Y6JW3REKKBSI" password="RvkljkEOitUV+6Kk5ZbN+GOYx7WZjH0/6A25ZePW7g8sfsO/3BFaxRTPEl9ZUbWX";'
+          CONNECT_CONSUMER_SECURITY_PROTOCOL: SASL_SSL
+          CONNECT_PRODUCER_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: https
+          CONNECT_PRODUCER_SASL_MECHANISM: PLAIN
+          CONNECT_PRODUCER_REQUEST_TIMEOUT_MS: 20000
+          CONNECT_PRODUCER_RETRY_BACKOFF_MS: 500
+          CONNECT_PRODUCER_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="ECI6Y6JW3REKKBSI" password="RvkljkEOitUV+6Kk5ZbN+GOYx7WZjH0/6A25ZePW7g8sfsO/3BFaxRTPEl9ZUbWX";'
+          CONNECT_PRODUCER_SECURITY_PROTOCOL: SASL_SSL
+          CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+          CONNECT_VALUE_CONVERTER_BASIC_AUTH_CREDENTIALS_SOURCE: USER_INFO
+          CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO: QWFEJWMCEO4SVJ6C:zlsL5LryOQ3rFVimpn4Hfr4Mw29sc/3CGOSx6R5M3Kejlt2joGLEu8B3xXNCVk80
+          CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: https://psrc-4kk0p.westeurope.azure.confluent.cloud
+          CONNECT_PLUGIN_PATH: /usr/share/java,/connector-plugins
+        #  CONNECT_LOG4J_LOGGERS: org.apache.kafka.connect=DEBUG
+        volumes:
+          - ./connector-plugins:/connector-plugins
+          - ./datagen:/datagen
     volumes:
-      - ./postgres/custom-config.conf:/etc/postgresql/postgresql.conf
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf
-    
-  connect:
-    image: confluentinc/cp-kafka-connect:latest
-    hostname: connect
-    container_name: connect
-    ports:
-      - "8083:8083"
-    environment:
-      CONNECT_BOOTSTRAP_SERVERS: ${CC_BOOTSTRAP_URL}
-      CONNECT_REST_ADVERTISED_HOST_NAME: connect
-      CONNECT_GROUP_ID: connect-cluster
-      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: null
-      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: null
-      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_INTERNAL_KEY_CONVERTER_SCHEMAS_ENABLE: null
-      CONNECT_INTERNAL_VALUE_CONVERTER_SCHEMAS_ENABLE: null
-      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
-      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 3
-      CONNECT_OFFSET_STORAGE_PARTITIONS: 3
-      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
-      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 3
-      CONNECT_STATUS_STORAGE_TOPIC: connect-status
-      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 3
-      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
-      CONNECT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: https
-      CONNECT_SASL_MECHANISM: PLAIN
-      CONNECT_REQUEST_TIMEOUT_MS: 20000
-      CONNECT_RETRY_BACKOFF_MS: 500
-      CONNECT_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="${CC_API_KEY}" password="${CC_API_SECRET}";'
-      CONNECT_SECURITY_PROTOCOL: SASL_SSL
-      CONNECT_CONSUMER_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: https
-      CONNECT_CONSUMER_SASL_MECHANISM: PLAIN
-      CONNECT_CONSUMER_REQUEST_TIMEOUT_MS: 20000
-      CONNECT_CONSUMER_RETRY_BACKOFF_MS: 500
-      CONNECT_CONSUMER_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="${CC_API_KEY}" password="${CC_API_SECRET}";'
-      CONNECT_CONSUMER_SECURITY_PROTOCOL: SASL_SSL
-      CONNECT_PRODUCER_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: https
-      CONNECT_PRODUCER_SASL_MECHANISM: PLAIN
-      CONNECT_PRODUCER_REQUEST_TIMEOUT_MS: 20000
-      CONNECT_PRODUCER_RETRY_BACKOFF_MS: 500
-      CONNECT_PRODUCER_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="${CC_API_KEY}" password="${CC_API_SECRET}";'
-      CONNECT_PRODUCER_SECURITY_PROTOCOL: SASL_SSL
-      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
-      CONNECT_VALUE_CONVERTER_BASIC_AUTH_CREDENTIALS_SOURCE: USER_INFO
-      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO: ${CC_SR_API_KEY}:${CC_SR_API_SECRET}
-      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: ${CC_SR_URL}
-      CONNECT_PLUGIN_PATH: /usr/share/java,/connector-plugins
-    #  CONNECT_LOG4J_LOGGERS: org.apache.kafka.connect=DEBUG
-    volumes:
-      - ./connector-plugins:/connector-plugins
-      - ./datagen:/datagen
-
-
-      
+      data01:
+        driver: local
+        

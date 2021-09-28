@@ -41,6 +41,15 @@
                         "Kiosko Bendita Golosina S.A"
                         ]
                     }
-                }}
+                }
+            },{"name": "banco", "type": {
+                    "type": "string",
+                    "arg.properties": {
+                    "options": [
+                        "Banco_Adquirido"
+                        ]
+                    }
+                }
+            }
         ]
 }
