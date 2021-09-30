@@ -1,3 +1,5 @@
 
 DemoCategorizador/variables_ramon.env
 DemoCategorizador/info
+CustomerBehavior/variables_ramon.env
+DemoCategorizador/Replicator.docker-compose.yml
